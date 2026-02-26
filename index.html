@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HSC Study Tracker - জিমি</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f0f2f5; margin: 0; padding: 10px; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #2c3e50; font-size: 18px; }
+        .stats { background: #e8f4fd; padding: 12px; border-radius: 10px; margin-bottom: 15px; text-align: center; border: 1px solid #3498db; }
+        .bar-bg { background: #ddd; height: 12px; border-radius: 10px; margin: 8px 0; overflow: hidden; }
+        .bar-fill { background: #2ecc71; height: 100%; width: 0%; transition: width 0.3s; }
+        .subject-box { border: 1px solid #ddd; border-radius: 8px; margin-bottom: 8px; }
+        .subject-header { background: #3498db; color: white; padding: 10px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; border-radius: 8px; font-weight: bold; font-size: 14px; }
+        .subject-content { display: none; padding: 8px; }
+        .item { display: flex; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; cursor: pointer; font-size: 14px; }
+        input[type="checkbox"] { width: 18px; height: 18px; margin-right: 10px; cursor: pointer; }
+        .badge { background: #fff; color: #3498db; padding: 2px 6px; border-radius: 10px; font-size: 11px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎓 HSC স্টাডি ট্র্যাকার</h1>
+    <div class="stats">
+        <strong>মোট প্রস্তুতি: <span id="total-text">0%</span></strong>
+        <div class="bar-bg"><div class="bar-fill" id="total-bar"></div></div>
+    </div>
+    <div id="main"></div>
+</div>
+<script>
+    const subjects = [
+        { name: "বাংলা ১ম পত্র", chapters: ["বাঙ্গালার নব্য লেখক", "অপরিচিতা", "সাহিত্যে খেলা", "বিলাসী", "অর্ধাঙ্গী", "যৌবনের গান", "জীবন ও বৃক্ষ", "গন্তব্য কাবুল", "মাসি-পিসি", "কপিলদাস মর্মু", "রেইনকোট", "নেকলেস", "ঋতু বর্ণন", "মেঘনাদ", "সোনার তরী", "বিদ্রোহী", "সুচেতনা", "প্রতিদান", "তাহারেই পড়ে মনে", "পদ্মা", "আঠারো বছর বয়স", "ফেব্রুয়ারি ১৯৬৯", "কিংবদন্তি", "প্রত্যাবর্তন"] },
+        { name: "বাংলা ২য় পত্র", chapters: ["উচ্চারণ", "বানান", "ব্যাকরণিক শব্দ", "শব্দগঠন", "বাক্যতত্ত্ব", "শুদ্ধ প্রয়োগ", "পারিভাষিক", "দিনলিপি", "পত্রলিখন", "সারাংশ", "সংলাপ", "প্রবন্ধ"] },
+        { name: "English 2nd", chapters: ["Articles", "Prepositions", "Special phrases", "Completing sentences", "Right form of verbs", "Changing sentences", "Narrative style", "Pronoun reference", "Modifiers", "Connectors", "Synonym-Antonym", "Punctuation", "Formal letter", "Report", "Paragraph", "Composition"] },
+        { name: "আইসিটি", chapters: ["বিশ্ব ও বাংলাদেশ", "নেটওয়ার্কিং", "সংখ্যা পদ্ধতি", "HTML", "প্রogramming (C)", "ডেটাবেজ"] },
+        { name: "পদার্থ ১ম", chapters: ["১. পরিমাপ", "২. ভেক্টর", "৩. গতিবিদ্যা", "৪. বলবিদ্যা", "৫. কাজ ও শক্তি", "৬. মহাকর্ষ", "৭. গাঠনিক ধর্ম", "৮. পর্যাবৃত্ত গতি", "৯. তরঙ্গ", "১০. আদর্শ গ্যাস"] },
+        { name: "পদার্থ ২য়", chapters: ["১. তাপগতি", "২. স্থির তড়িৎ", "৩. চল তড়িৎ", "৪. চৌম্বক ক্রিয়া", "৫. আবেশ", "৬. জ্যামিতিক আলোক", "৭. ভৌত আলোক", "৮. আধুনিক পদার্থবিজ্ঞান", "৯. পরমাণু", "১০. সেমিকন্ডাক্টর", "১১. জ্যোতির্বিজ্ঞান"] },
+        { name: "রসায়ন ১ম", chapters: ["১. ল্যাবরেটরি", "২. গুণগত রসায়ন", "৩. পর্যায়বৃত্ত", "৪. রাসায়নিক পরিবর্তন", "৫. কর্মমুখী"] },
+        { name: "রসায়ন ২য়", chapters: ["১. পরিবেশ", "২. জৈব রসায়ন", "৩. পরিমাণগত", "৪. তড়িৎ", "৫. অর্থনৈতিক"] },
+        { name: "জীব বিজ্ঞান ১ম", chapters: ["১. কোষ", "২. বিভাজন", "৩. রসায়ন", "৪. অণুজীব", "৫. শৈবাল", "৬. ব্রায়োফাইটা", "৭. নগ্নবীজী", "৮. টিস্যু", "৯. শারীরতত্ত্ব", "১০. প্রজনন", "১১. জীবপ্রযুক্তি", "১২. পরিবেশ"] },
+        { name: "জীব বিজ্ঞান ২য়", chapters: ["১. শ্রেণিবিন্যাস", "২. প্রাণীর পরিচিতি", "৩. পরিপাক", "৪. রক্ত", "৫. শ্বসন", "৬. বর্জ্য", "৭. চলন", "৮. সমন্বয়", "৯. ধারাবাহিকতা", "১০. প্রতিরক্ষা", "১১. জিনতত্ত্ব", "১২. আচরণ"] },
+        { name: "উচ্চতর গণিত ১ম", chapters: ["১. ম্যাট্রিক্স", "২. ভেক্টর", "৩. সরলরেখা", "৪. বৃত্ত", "৫. বিন্যাস", "৬. ত্রিকোণমিতি", "৭. সংযুক্ত কোণ", "৮. ফাংশন", "৯. অন্তরীকরণ", "১০. যোগজীকরণ"] },
+        { name: "উচ্চতর গণিত ২য়", chapters: ["১. বাস্তব সংখ্যা", "২. যোগাশ্রয়ী", "৩. জটিল সংখ্যা", "৪. বহুপদী", "৫. দ্বিপদী", "৬. কণিক", "৭. বিপরীত ত্রিকোণমিতি", "৮. স্থিতিবিদ্যা", "৯. গতিবিদ্যা", "১০. সম্ভাবনা"] }
+    ];
+    const main = document.getElementById('main');
+    subjects.forEach((s, sIdx) => {
+        let div = document.createElement('div');
+        div.className = 'subject-box';
+        div.innerHTML = `<div class="subject-header" onclick="toggle(${sIdx})"><span>${s.name}</span><span class="badge" id="p-${sIdx}">0%</span></div><div class="subject-content" id="c-${sIdx}">${s.chapters.map((ch, cIdx) => `<label class="item"><input type="checkbox" id="check-${sIdx}-${cIdx}" onchange="save()"> ${ch}</label>`).join('')}</div>`;
+        main.appendChild(div);
+    });
+    function toggle(i) { let el = document.getElementById(`c-${i}`); el.style.display = (el.style.display === 'block') ? 'none' : 'block'; }
+    function save() {
+        let total = 0, done = 0;
+        subjects.forEach((s, sIdx) => {
+            let sDone = 0;
+            s.chapters.forEach((_, cIdx) => {
+                total++;
+                if(document.getElementById(`check-${sIdx}-${cIdx}`).checked) { sDone++; done++; localStorage.setItem(`hsc-${sIdx}-${cIdx}`, '1'); }
+                else { localStorage.removeItem(`hsc-${sIdx}-${cIdx}`); }
+            });
+            document.getElementById(`p-${sIdx}`).innerText = Math.round((sDone/s.chapters.length)*100) + '%';
+        });
+        let res = Math.round((done/total)*100);
+        document.getElementById('total-text').innerText = res + '%';
+        document.getElementById('total-bar').style.width = res + '%';
+    }
+    window.onload = () => {
+        subjects.forEach((s, sIdx) => { s.chapters.forEach((_, cIdx) => { if(localStorage.getItem(`hsc-${sIdx}-${cIdx}`)) document.getElementById(`check-${sIdx}-${cIdx}`).checked = true; }); });
+        save();
+    }
+</script>
+</body>
+  </html>
+  
